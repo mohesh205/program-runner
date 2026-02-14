@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Ultimate Code Playground</title>
+<title>Code Playground IDE</title>
 
 <style>
 body{
@@ -38,15 +38,12 @@ background:#238636;
 color:white;
 }
 
-button:hover{
-background:#2ea043;
-}
-
 .container{
 flex:1;
 display:flex;
 }
 
+/* Editor */
 .editor{
 width:50%;
 display:flex;
@@ -68,6 +65,27 @@ cursor:pointer;
 border-bottom:2px solid #2ea043;
 }
 
+/* Code Area */
+.code-wrapper{
+flex:1;
+display:flex;
+position:relative;
+}
+
+/* Line Numbers */
+.line-numbers{
+width:50px;
+background:#161b22;
+color:#8b949e;
+padding:12px 5px;
+text-align:right;
+font-family:monospace;
+font-size:14px;
+overflow:hidden;
+user-select:none;
+}
+
+/* Textarea */
 textarea{
 flex:1;
 background:#0d1117;
@@ -78,8 +96,10 @@ font-family:monospace;
 font-size:14px;
 outline:none;
 resize:none;
+overflow:auto;
 }
 
+/* Output */
 .output{
 width:50%;
 display:flex;
@@ -105,16 +125,12 @@ padding:8px;
 
 <body>
 
-<header>💻 Ultimate Code Playground</header>
+<header>💻 Code Playground IDE</header>
 
 <div class="toolbar">
 <button onclick="runCode()">▶ Run</button>
 <button onclick="copyCode()">📋 Copy</button>
-<button onclick="pasteCode()">📥 Paste</button>
 <button onclick="clearCode()">🗑 Clear</button>
-<button onclick="saveProject()">💾 Save</button>
-<button onclick="openProject()">📂 Open</button>
-<input type="file" id="fileInput" hidden>
 </div>
 
 <div class="container">
@@ -127,9 +143,23 @@ padding:8px;
 <div class="tab" onclick="switchTab('js')">JS</div>
 </div>
 
+<!-- HTML -->
+<div class="code-wrapper">
+<div class="line-numbers" id="html-lines"></div>
 <textarea id="html"></textarea>
-<textarea id="css" style="display:none"></textarea>
-<textarea id="js" style="display:none"></textarea>
+</div>
+
+<!-- CSS -->
+<div class="code-wrapper" style="display:none">
+<div class="line-numbers" id="css-lines"></div>
+<textarea id="css"></textarea>
+</div>
+
+<!-- JS -->
+<div class="code-wrapper" style="display:none">
+<div class="line-numbers" id="js-lines"></div>
+<textarea id="js"></textarea>
+</div>
 
 </div>
 
@@ -142,20 +172,45 @@ padding:8px;
 
 <script>
 
+let tabs=["html","css","js"];
 let currentTab="html";
 
-/* Tab Switch */
+/* Switch Tab */
 function switchTab(tab){
 
 document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
 event.target.classList.add("active");
 
-["html","css","js"].forEach(id=>{
-document.getElementById(id).style.display="none";
-});
+document.querySelectorAll(".code-wrapper").forEach(c=>c.style.display="none");
 
-document.getElementById(tab).style.display="block";
+let index=tabs.indexOf(tab);
+document.querySelectorAll(".code-wrapper")[index].style.display="flex";
+
 currentTab=tab;
+}
+
+/* Line Numbers */
+function updateLines(id){
+
+let textarea=document.getElementById(id);
+let lines=document.getElementById(id+"-lines");
+
+let count=textarea.value.split("\n").length;
+
+let numbers="";
+for(let i=1;i<=count;i++){
+numbers+=i+"<br>";
+}
+
+lines.innerHTML=numbers;
+}
+
+/* Sync Scroll */
+function syncScroll(id){
+let textarea=document.getElementById(id);
+let lines=document.getElementById(id+"-lines");
+
+lines.scrollTop=textarea.scrollTop;
 }
 
 /* Run Code */
@@ -190,70 +245,30 @@ document.getElementById("output").srcdoc=code;
 /* Copy */
 function copyCode(){
 navigator.clipboard.writeText(document.getElementById(currentTab).value);
-alert("Copied!");
-}
-
-/* Paste */
-async function pasteCode(){
-let text=await navigator.clipboard.readText();
-document.getElementById(currentTab).value=text;
 }
 
 /* Clear */
 function clearCode(){
-if(confirm("Clear all code?")){
-document.getElementById("html").value="";
-document.getElementById("css").value="";
-document.getElementById("js").value="";
-}
+document.getElementById(currentTab).value="";
+updateLines(currentTab);
 }
 
-/* Save Project */
-function saveProject(){
+/* Event Listeners */
+tabs.forEach(id=>{
 
-let data={
-html:document.getElementById("html").value,
-css:document.getElementById("css").value,
-js:document.getElementById("js").value
-};
+let textarea=document.getElementById(id);
 
-let blob=new Blob([JSON.stringify(data)],{type:"application/json"});
-let a=document.createElement("a");
-
-a.href=URL.createObjectURL(blob);
-a.download="project.json";
-a.click();
-}
-
-/* Open Project */
-function openProject(){
-document.getElementById("fileInput").click();
-}
-
-document.getElementById("fileInput").addEventListener("change",function(){
-
-let file=this.files[0];
-if(!file) return;
-
-let reader=new FileReader();
-
-reader.onload=function(e){
-
-let data=JSON.parse(e.target.result);
-
-document.getElementById("html").value=data.html;
-document.getElementById("css").value=data.css;
-document.getElementById("js").value=data.js;
-
+textarea.addEventListener("input",()=>{
+updateLines(id);
 runCode();
-};
-
-reader.readAsText(file);
 });
 
-/* Auto Preview */
-document.querySelectorAll("textarea").forEach(t=>{
-t.addEventListener("keyup",runCode);
+textarea.addEventListener("scroll",()=>{
+syncScroll(id);
+});
+
+updateLines(id);
+
 });
 
 </script>
