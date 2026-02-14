@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Professional Code Playground</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body{
+    background:#0d1117;
+    color:white;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+}
+
+/* Header */
+header{
+    background:#161b22;
+    padding:12px 20px;
+    font-size:18px;
+    font-weight:bold;
+    border-bottom:1px solid #30363d;
+}
+
+/* Toolbar */
+.toolbar{
+    background:#161b22;
+    padding:8px;
+    display:flex;
+    gap:10px;
+    border-bottom:1px solid #30363d;
+}
+
+button{
+    background:#238636;
+    border:none;
+    padding:6px 14px;
+    color:white;
+    cursor:pointer;
+    border-radius:4px;
+    font-size:14px;
+}
+
+button:hover{
+    background:#2ea043;
+}
+
+.clear{
+    background:#da3633;
+}
+
+.copy{
+    background:#1f6feb;
+}
+
+/* Layout */
+.container{
+    flex:1;
+    display:flex;
+}
+
+/* Editors */
+.editor-panel{
+    width:50%;
+    display:flex;
+    flex-direction:column;
+    border-right:1px solid #30363d;
+}
+
+.tabs{
+    display:flex;
+    background:#161b22;
+}
+
+.tab{
+    padding:10px 20px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+}
+
+.tab.active{
+    border-bottom:2px solid #2ea043;
+    background:#0d1117;
+}
+
+textarea{
+    flex:1;
+    background:#0d1117;
+    color:#c9d1d9;
+    border:none;
+    padding:15px;
+    font-family:monospace;
+    font-size:14px;
+    outline:none;
+    resize:none;
+}
+
+/* Output */
+.output-panel{
+    width:50%;
+    display:flex;
+    flex-direction:column;
+}
+
+iframe{
+    flex:1;
+    border:none;
+    background:white;
+}
+
+/* Console */
+.console{
+    height:150px;
+    background:black;
+    color:#00ff88;
+    font-family:monospace;
+    overflow:auto;
+    padding:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>💻 Professional Code Playground</header>
+
+<div class="toolbar">
+<button onclick="runCode()">▶ Run</button>
+<button class="clear" onclick="clearCode()">🗑 Clear</button>
+<button class="copy" onclick="copyCode()">📋 Copy</button>
+</div>
+
+<div class="container">
+
+<!-- Editor -->
+<div class="editor-panel">
+
+<div class="tabs">
+<div class="tab active" onclick="switchTab('html')">HTML</div>
+<div class="tab" onclick="switchTab('css')">CSS</div>
+<div class="tab" onclick="switchTab('js')">JavaScript</div>
+</div>
+
+<textarea id="html"></textarea>
+<textarea id="css" style="display:none"></textarea>
+<textarea id="js" style="display:none"></textarea>
+
+</div>
+
+<!-- Output -->
+<div class="output-panel">
+<iframe id="output"></iframe>
+<div class="console" id="console">Console Output...</div>
+</div>
+
+</div>
+
+<script>
+
+let currentTab = "html";
+
+/* Switch Tabs */
+function switchTab(tab){
+
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    event.target.classList.add("active");
+
+    ["html","css","js"].forEach(id=>{
+        document.getElementById(id).style.display = "none";
+    });
+
+    document.getElementById(tab).style.display = "block";
+    currentTab = tab;
+}
+
+/* Run Code */
+function runCode(){
+
+    let html = document.getElementById("html").value;
+    let css = "<style>" + document.getElementById("css").value + "</style>";
+    let js = document.getElementById("js").value;
+
+    let consoleDiv = document.getElementById("console");
+    consoleDiv.innerHTML = "";
+
+    let frame = document.getElementById("output");
+
+    let code = `
+        ${html}
+        ${css}
+        <script>
+            const log = (...args)=>{
+                parent.document.getElementById("console").innerHTML += args.join(" ") + "<br>";
+            };
+            console.log = log;
+            try{
+                ${js}
+            }catch(e){
+                log("Error: " + e.message);
+            }
+        <\/script>
+    `;
+
+    frame.srcdoc = code;
+}
+
+/* Clear */
+function clearCode(){
+    document.getElementById("html").value="";
+    document.getElementById("css").value="";
+    document.getElementById("js").value="";
+}
+
+/* Copy */
+function copyCode(){
+
+    let text = document.getElementById(currentTab).value;
+
+    navigator.clipboard.writeText(text);
+    alert("Copied!");
+}
+
+/* Auto Live Preview */
+document.querySelectorAll("textarea").forEach(t=>{
+    t.addEventListener("keyup",runCode);
+});
+
+</script>
+
+</body>
+</html>
